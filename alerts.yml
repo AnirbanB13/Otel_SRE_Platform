@@ -1,0 +1,44 @@
+groups:
+  - name: sre-slo-alerts
+    rules:
+      # 1. RECORDING RULE: Calculate the 5-minute error budget burn rate
+      - record: job:error_burn_rate:5m
+        expr: |
+          sum(rate(app_requests_total{status=~"5.*"}[5m])) 
+          / 
+          sum(rate(app_requests_total[5m])) 
+          / 
+          0.001
+
+      # 2. RECORDING RULE: Calculate the 1-hour error budget burn rate
+      - record: job:error_burn_rate:1h
+        expr: |
+          sum(rate(app_requests_total{status=~"5.*"}[1h])) 
+          / 
+          sum(rate(app_requests_total[1h])) 
+          / 
+          0.001
+
+      # 3. ALERT: Fast Burn Rate (Page the on-call engineer immediately)
+      # Triggers if we consume 2% of our 30-day budget in 1 hour (Burn rate > 14.4)
+      - alert: ErrorBudgetBurnRateFast
+        expr: job:error_burn_rate:5m > 14.4 and job:error_burn_rate:1h > 14.4
+        for: 2m
+        labels:
+          severity: critical
+          sre_tier: tier-1
+        annotations:
+          summary: "Critical error budget burn rate detected (Service: sρέ-demo)"
+          description: "The service is burning through its error budget at a rate of >14.4x. At this rate, the monthly error budget will be exhausted in less than 50 hours."
+
+      # 4. ALERT: Slow Burn Rate (Create a ticket for the next working day)
+      # Triggers if we consume 5% of our 30-day budget over 6 hours (Burn rate > 6)
+      - alert: ErrorBudgetBurnRateSlow
+        expr: job:error_burn_rate:1h > 6 and job:error_burn_rate:5m > 6
+        for: 15m
+        labels:
+          severity: warning
+          sre_tier: tier-2
+        annotations:
+          summary: "Elevated error budget burn rate detected"
+          description: "The service is consuming its error budget steadily at >6x. Review application logs in Loki and traces in Tempo."
