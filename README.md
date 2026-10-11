@@ -2,7 +2,7 @@
 
 An enterprise-grade, polyglot observability pipeline built for Site Reliability Engineering (SRE). This project moves beyond basic server monitoring by implementing unified OpenTelemetry data collection, trace-to-log correlation, and autom ated multi-window, multi-burn-rate error budget alerting.
 
-## 7' 🏗️ Architecture & Telemetry Flow
+## 🏗️ Architecture & Telemetry Flow
 
 The platform centralizes all telemetry signals (Metrics, Logs, and Traces) through an OpenTelemetry Collector before dispatching them to specialized storage backends.
 
